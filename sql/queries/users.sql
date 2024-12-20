@@ -16,4 +16,4 @@ SELECT * FROM "user";
 SELECT * FROM "user" WHERE name = $1;
 
 -- name: Reset :exec
-TRUNCATE TABLE "user";
+DELETE FROM "user";

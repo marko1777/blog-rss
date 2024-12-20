@@ -13,15 +13,24 @@ if &shortmess =~ 'A'
 else
   set shortmess=aoO
 endif
-badd +41 main.go
+badd +22 main.go
 badd +116 cmd/main.go
-badd +13 cmd/cmd.go
+badd +33 cmd/cmd.go
 badd +8 internal/state/state.go
-badd +9 sql/queries/users.sql
+badd +19 sql/queries/users.sql
+badd +3 .gitignore
+badd +57 rss/rss.go
+badd +12 sql/schema/002_feeds.sql
+badd +9 sql/schema/001_users.sql
+badd +8 sql/queries/feed.sql
+badd +6 sqlc.yaml
+badd +28 internal/database/feed.sql.go
+badd +18 internal/database/users.sql.go
+badd +12 internal/database/models.go
 argglobal
 %argdel
 $argadd ~/projects/learn/blog-rss/
-edit ~/projects/learn/blog-rss
+edit sql/queries/users.sql
 let s:save_splitbelow = &splitbelow
 let s:save_splitright = &splitright
 set splitbelow splitright
@@ -38,8 +47,8 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-exe 'vert 1resize ' . ((&columns * 93 + 95) / 191)
-exe 'vert 2resize ' . ((&columns * 97 + 95) / 191)
+exe 'vert 1resize ' . ((&columns * 93 + 47) / 95)
+exe 'vert 2resize ' . ((&columns * 1 + 47) / 95)
 argglobal
 setlocal fdm=manual
 setlocal fde=0
@@ -48,23 +57,22 @@ setlocal fdi=#
 setlocal fdl=0
 setlocal fml=1
 setlocal fdn=20
-setlocal fen
+setlocal nofen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 7 - ((6 * winheight(0) + 26) / 53)
+let s:l = 1 - ((0 * winheight(0) + 26) / 53)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 7
+keepjumps 1
 normal! 0
 lcd ~/projects/learn/blog-rss
 wincmd w
 argglobal
-if bufexists(fnamemodify("~/projects/learn/blog-rss/main.go", ":p")) | buffer ~/projects/learn/blog-rss/main.go | else | edit ~/projects/learn/blog-rss/main.go | endif
+if bufexists(fnamemodify("~/projects/learn/blog-rss/internal/database/feed.sql.go", ":p")) | buffer ~/projects/learn/blog-rss/internal/database/feed.sql.go | else | edit ~/projects/learn/blog-rss/internal/database/feed.sql.go | endif
 if &buftype ==# 'terminal'
-  silent file ~/projects/learn/blog-rss/main.go
+  silent file ~/projects/learn/blog-rss/internal/database/feed.sql.go
 endif
-balt ~/projects/learn/blog-rss/sql/queries/users.sql
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -75,16 +83,16 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 28 - ((27 * winheight(0) + 26) / 53)
+let s:l = 16 - ((12 * winheight(0) + 26) / 53)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 28
-normal! 021|
+keepjumps 16
+normal! 01|
 lcd ~/projects/learn/blog-rss
 wincmd w
-exe 'vert 1resize ' . ((&columns * 93 + 95) / 191)
-exe 'vert 2resize ' . ((&columns * 97 + 95) / 191)
+exe 'vert 1resize ' . ((&columns * 93 + 47) / 95)
+exe 'vert 2resize ' . ((&columns * 1 + 47) / 95)
 tabnext 1
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
   silent exe 'bwipe ' . s:wipebuf

@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/marko1777/blog-rss/internal/database"
 	"github.com/marko1777/blog-rss/internal/state"
+	"github.com/marko1777/blog-rss/rss"
 )
 
 type Command struct {
@@ -25,12 +26,12 @@ func (this Commands) Register(
 }
 
 func (this Commands) Run(s *state.State, cmd Command) error {
-	Command, ok := this[cmd.Name]
+	command, ok := this[cmd.Name]
 	if !ok {
 		return fmt.Errorf("Command: %s; not found", cmd.Name)
 	}
 
-	return Command(s, cmd)
+	return command(s, cmd)
 }
 
 func HandlerLogin(s *state.State, cmd Command) error {
@@ -86,18 +87,6 @@ func HandlerRegister(s *state.State, cmd Command) error {
 	return nil
 }
 
-func HandlerReset(s *state.State, cmd Command) error {
-	err := s.DBQueries.Reset(context.Background())
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	fmt.Println("User table reset")
-
-	return nil
-}
-
 func HandlerUsers(s *state.State, cmd Command) error {
 	users, err := s.DBQueries.GetUsers(context.Background())
 	if err != nil {
@@ -111,5 +100,76 @@ func HandlerUsers(s *state.State, cmd Command) error {
 		}
 		fmt.Println(str)
 	}
+	return nil
+}
+
+func HandlerReset(s *state.State, cmd Command) error {
+	err := s.DBQueries.Reset(context.Background())
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	fmt.Println("User table reset")
+
+	return nil
+}
+
+func HandlerAgg(s *state.State, cmd Command) error {
+	feed, err := rss.FetchFeed(
+		context.Background(),
+		"https://www.wagslane.dev/index.xml",
+	)
+
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	fmt.Println(feed)
+	return nil
+}
+
+func HandlerAddFeed(s *state.State, cmd Command) error {
+	if len(cmd.Args) != 2 {
+		return fmt.Errorf("Usage: ./blog-rss addFeed <username> <url>")
+	}
+	user, err := s.DBQueries.GetUser(
+		context.Background(),
+		s.Cfg.CurrentUserName,
+	)
+
+	if err != nil {
+		fmt.Printf("GetUser error: %v\n",err)
+		return err
+	}
+
+	name := cmd.Args[0]
+	url := cmd.Args[1]
+
+	feed, err := rss.FetchFeed(context.Background(), url)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	_, err = s.DBQueries.CreateFeed(
+		context.Background(),
+		database.CreateFeedParams{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			Name:      name,
+			Url:       url,
+			UserID:    user.ID,
+		},
+	)
+
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	fmt.Println(feed)
+
 	return nil
 }

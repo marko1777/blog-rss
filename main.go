@@ -34,6 +34,8 @@ func main() {
 	cmds.Register("register", cmd.HandlerRegister)
 	cmds.Register("users", cmd.HandlerUsers)
 	cmds.Register("reset", cmd.HandlerReset)
+	cmds.Register("agg", cmd.HandlerAgg)
+	cmds.Register("addfeed", cmd.HandlerAddFeed)
 
 	cmdName := args[0]
 	cmdArgs := args[1:]
@@ -46,5 +48,4 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
 }
