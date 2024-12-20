@@ -1,50 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 
+	"github.com/marko1777/blog-rss/cmd"
 	"github.com/marko1777/blog-rss/internal/config"
+	"github.com/marko1777/blog-rss/internal/database"
+	"github.com/marko1777/blog-rss/internal/state"
+
+	_ "github.com/lib/pq"
 )
-
-type state struct {
-	cfg *config.Config
-}
-
-type command struct {
-	name string
-	args []string
-}
-
-type commands map[string]func(*state, command) error
-
-func (this commands) register(name string, f func(*state, command) error) {
-	this[name] = f
-}
-
-func (this commands) run(s *state, cmd command) error {
-	command, ok := this[cmd.name]
-	if !ok {
-		return fmt.Errorf("Command: %s; not found", cmd.name)
-	}
-
-	return command(s, cmd)
-}
-
-func handlerLogin(s *state, cmd command) error {
-	if len(cmd.args) != 1 {
-		return fmt.Errorf("Usage: ./blog-rss login <username>")
-	}
-	username := cmd.args[0]
-	err := s.cfg.SetUser(username)
-
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	fmt.Printf("User: %s; has been set\n", username)
-	return nil
-}
 
 func main() {
 	args := os.Args[1:]
@@ -52,23 +19,32 @@ func main() {
 		fmt.Println("Usage <command> <arguments>")
 		os.Exit(1)
 	}
+	cfg := config.Read()
 
-	state := &state{
-		cfg: config.Read(),
+	db, err := sql.Open("postgres", cfg.DB_URL)
+
+	dbQueries := database.New(db)
+	state := &state.State{
+		Cfg:       cfg,
+		DBQueries: dbQueries,
 	}
 
-	cmds := commands{}
-	cmds.register("login", handlerLogin)
+	cmds := cmd.Commands{}
+	cmds.Register("login", cmd.HandlerLogin)
+	cmds.Register("register", cmd.HandlerRegister)
+	cmds.Register("users", cmd.HandlerUsers)
+	cmds.Register("reset", cmd.HandlerReset)
 
-	cmd := args[0]
+	cmdName := args[0]
 	cmdArgs := args[1:]
-	err := cmds.run(state, command{
-		name: cmd,
-		args: cmdArgs,
+	err = cmds.Run(state, cmd.Command{
+		Name: cmdName,
+		Args: cmdArgs,
 	})
 
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
 }
